@@ -80,7 +80,8 @@ def create_data_and_move(file_path: str, c: config.Config, debug):
     n_number = get_number(debug, file_path)
 
     if config.getConfig().useDatabase():
-        alreadyInDB = database.addNumber(n_number, os.path.abspath(file_path))
+        multi_part, part = get_part(n_number, file_path)
+        alreadyInDB = database.addNumber(n_number+part, os.path.abspath(file_path))
         if alreadyInDB:
             print("[!]Data for [{}] with number [{}] is in the database".format(file_path, n_number))
             if not config.getConfig().ignoreDatabase():

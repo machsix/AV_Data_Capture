@@ -623,7 +623,7 @@ def paste_file_to_folder_mode2(filepath, path, multi_part, number, part, c_word,
         print('[-]Error! Please run as administrator!')
         return
 
-def get_part(number, filepath, failed_folder):
+def get_part(number, filepath):
     if '-CD' in filepath or '-cd' in filepath:
         multi_part = 1
         try:
@@ -635,12 +635,7 @@ def get_part(number, filepath, failed_folder):
         except:
             pass
 
-        # except:
-        #     print("[-]failed!Please rename the filename again!")
-        #     moveFailedFolder(filepath, failed_folder)
-        #     return 0, ''
-
-    _tmp = re.findall(r'^([A-Z]{2,4}-\d+)([A-Z])$', number)
+    _tmp = re.findall(r'^([A-Z]{2,4}-\d+)([A-Z])$', os.path.basename(filepath.upper()).split('.')[0])
     if _tmp:
         multi_part = 1
         part = '-CD{:1d}'.format(ord(_tmp[0][1]) - ord('A') + 1)
@@ -700,7 +695,7 @@ def core_main(file_path, number_th, conf: config.Config):
     imagecut =  json_data.get('imagecut')
     tag =  json_data.get('tag')
     # =======================================================================判断-C,-CD后缀
-    multi_part, part = get_part(number, filepath, conf.failed_folder())
+    multi_part, part = get_part(number, filepath)
     if '-c.' in filepath or '-C.' in filepath or '中文' in filepath or '字幕' in filepath:
         cn_sub = '1'
         c_word = '-C'  # 中文字幕影片后缀
