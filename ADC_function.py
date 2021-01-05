@@ -40,7 +40,7 @@ def get_proxy(proxy: str, proxytype: str = None) -> dict:
 
 # 网页请求核心
 def get_html(url, cookies: dict = None, ua: str = None, return_type: str = None):
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    switch, proxy, timeout, retry_count, proxytype = config.getConfig().proxy()
     proxies = get_proxy(proxy, proxytype)
 
     if ua is None:
@@ -71,7 +71,7 @@ def get_html(url, cookies: dict = None, ua: str = None, return_type: str = None)
 
 
 def post_html(url: str, query: dict) -> requests.Response:
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    switch, proxy, timeout, retry_count, proxytype = config.getConfig().proxy()
     proxies = get_proxy(proxy, proxytype)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3100.0 Safari/537.36"}
@@ -90,7 +90,7 @@ def post_html(url: str, query: dict) -> requests.Response:
 
 def get_javlib_cookie() -> [dict, str]:
     import cloudscraper
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    switch, proxy, timeout, retry_count, proxytype = config.getConfig().proxy()
     proxies = get_proxy(proxy, proxytype)
 
     raw_cookie = {}
@@ -116,7 +116,7 @@ def get_javlib_cookie() -> [dict, str]:
     return raw_cookie, user_agent
 
 def translateTag_to_sc(tag):
-    tranlate_to_sc = config.Config().transalte_to_sc()
+    tranlate_to_sc = config.getConfig().transalte_to_sc()
     if tranlate_to_sc:
         dict_gen = {'中文字幕': '中文字幕',
                     '高清': 'XXXX', '字幕': 'XXXX', '推薦作品': '推荐作品', '通姦': '通奸', '淋浴': '淋浴', '舌頭': '舌头',
@@ -470,7 +470,7 @@ def translate(src:str,target_language:str="zh_cn"):
 def is_uncensored(number):
     if re.match('^\d{4,}', number) or re.match('n\d{4}', number) or 'HEYZO' in number.upper():
         return True
-    configs = config.Config().get_uncensored()
+    configs = config.getConfig().get_uncensored()
     prefix_list = str(configs).split(',')
     for pre in prefix_list:
         if pre.upper() in number.upper():

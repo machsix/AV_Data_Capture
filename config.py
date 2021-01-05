@@ -2,6 +2,18 @@ import os
 import configparser
 import codecs
 
+_config = None
+
+def setConfig(conf):
+    global _config
+    _config = conf
+
+def getConfig():
+    global _config
+    if _config:
+        return _config
+    else:
+        return Config._default_config()
 
 class Config:
     def __init__(self, path: str = "config.ini"):
@@ -52,8 +64,8 @@ class Config:
         return self.conf.getboolean("watermark", "switch")
 
     def is_extrafanart(self) -> bool:
-        return self.conf.getboolean("extrafanart", "switch")   
-    
+        return self.conf.getboolean("extrafanart", "switch")
+
     def watermark_type(self) -> int:
         return int(self.conf.get("watermark", "water"))
 
@@ -73,7 +85,7 @@ class Config:
             return extrafanart_download
         except ValueError:
             self._exit("extrafanart_folder")
-            
+
     def transalte_values(self) -> bool:
         return self.conf.get("transalte", "values")
     def proxy(self) -> [str, int, int, str]:
@@ -87,19 +99,19 @@ class Config:
             return switch, proxy, timeout, retry, proxytype
         except ValueError:
             self._exit("common")
-            
+
     def media_type(self) -> str:
         return self.conf.get('media', 'media_type')
 
     def sub_rule(self):
         return self.conf.get('media', 'sub_type').split(',')
-            
+
     def naming_rule(self) -> str:
         return self.conf.get("Name_Rule", "naming_rule")
 
     def location_rule(self) -> str:
         return self.conf.get("Name_Rule", "location_rule")
-    
+
     def max_title_len(self) -> int:
         """
         Maximum title length
@@ -181,7 +193,7 @@ class Config:
         conf.add_section(sec8)
         conf.set(sec8, "switch", "0")
         conf.set(sec8, "values", "title,outline")
-        
+
         sec9 = "trailer"
         conf.add_section(sec9)
         conf.set(sec9, "switch", "0")

@@ -23,6 +23,16 @@ from WebCrawler import xcity
 from WebCrawler import javlib
 from WebCrawler import dlsite
 
+def relSymLink(src, dest):
+    cwd = os.getcwd()
+    srcRealPath = os.path.abspath(src)
+    destRealPath = os.path.abspath(dest)
+    os.chdir(os.path.dirname(destRealPath))
+    if os.path.isfile(os.path.basename(destRealPath)):
+        os.remove(os.path.basename(destRealPath))
+    os.symlink(os.path.relpath(srcRealPath, os.getcwd()),
+               os.path.basename(destRealPath))
+    os.chdir(cwd)
 
 def escape_path(path, escape_literals: str):  # Remove escape literals
     backslash = '\\'
@@ -32,13 +42,14 @@ def escape_path(path, escape_literals: str):  # Remove escape literals
 
 
 def moveFailedFolder(filepath, failed_folder):
-    if config.Config().failed_move():
+    if config.getConfig().failed_move():
         root_path = str(pathlib.Path(filepath).parent)
         file_name = pathlib.Path(filepath).name
         destination_path = root_path + '/' + failed_folder + '/'
-        if config.Config().soft_link():
+        os.makedirs(destination_path, exist_ok=True)
+        if config.getConfig().soft_link():
             print('[-]Create symlink to Failed output folder')
-            os.symlink(filepath, destination_path + '/' + file_name)
+            relSymLink(filepath, destination_path + '/' + file_name)
         else:
             print('[-]Move to Failed output folder')
             shutil.move(filepath, destination_path)
@@ -47,7 +58,7 @@ def moveFailedFolder(filepath, failed_folder):
 
 def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON返回元数据
     """
-    iterate through all services and fetch the data 
+    iterate through all services and fetch the data
     """
 
     func_mapping = {
@@ -130,17 +141,17 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
         cover_small = ''
     else:
         cover_small = json_data.get('cover_small')
-    
+
     if json_data.get('trailer') == None:
         trailer = ''
     else:
         trailer = json_data.get('trailer')
-        
+
     if json_data.get('extrafanart') == None:
         extrafanart = ''
     else:
         extrafanart = json_data.get('extrafanart')
-    
+
     imagecut = json_data.get('imagecut')
     tag = str(json_data.get('tag')).strip("[ ]").replace("'", '').replace(" ", '').split(',')  # 字符串转列表 @
     actor = str(actor_list).strip("[ ]").replace("'", '').replace(" ", '')
@@ -206,7 +217,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
     studio = re.sub('.*/妄想族','妄想族',studio)
     studio = studio.replace('/',' ')
     # ===  替换Studio片假名 END
-    
+
     location_rule = eval(conf.location_rule())
 
     if 'actor' in conf.location_rule() and len(actor) > 100:
@@ -230,7 +241,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
         translate_values = conf.transalte_values().split(",")
         for translate_value in translate_values:
             json_data[translate_value] = translate(json_data[translate_value])
-            
+
     if conf.is_trailer():
         if trailer:
             json_data['trailer'] = trailer
@@ -238,7 +249,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
             json_data['trailer'] = ''
     else:
         json_data['trailer'] = ''
-        
+
     if conf.is_extrafanart():
         if extrafanart:
             json_data['extrafanart'] = extrafanart
@@ -246,7 +257,7 @@ def get_data_from_json(file_number, filepath, conf: config.Config):  # 从JSON�
             json_data['extrafanart'] = ''
     else:
         json_data['extrafanart'] = ''
-        
+
     naming_rule=""
     for i in conf.naming_rule().split("+"):
         if i not in json_data:
@@ -273,7 +284,6 @@ def get_info(json_data):  # 返回json里的数据
     series = json_data.get('series')
     label = json_data.get('label', "")
     return title, studio, year, outline, runtime, director, actor_photo, release, number, cover, trailer, website, series, label
-
 
 def small_cover_check(path, number, cover_small, c_word, conf: config.Config, filepath, failed_folder):
     download_file_with_filename(cover_small, number + c_word + '-poster.jpg', path, conf, filepath, failed_folder)
@@ -312,7 +322,7 @@ def trimblank(s: str):
 
 # path = examle:photo , video.in the Project Folder!
 def download_file_with_filename(url, filename, path, conf: config.Config, filepath, failed_folder):
-    switch, proxy, timeout, retry_count, proxytype = config.Config().proxy()
+    switch, proxy, timeout, retry_count, proxytype = config.getConfig().proxy()
 
     for i in range(retry_count):
         try:
@@ -325,7 +335,7 @@ def download_file_with_filename(url, filename, path, conf: config.Config, filepa
                 r = requests.get(url, headers=headers, timeout=timeout, proxies=proxies)
                 if r == '':
                     print('[-]Movie Data not found!')
-                    return 
+                    return
                 with open(str(path) + "/" + filename, "wb") as code:
                     code.write(r.content)
                 return
@@ -337,7 +347,7 @@ def download_file_with_filename(url, filename, path, conf: config.Config, filepa
                 r = requests.get(url, timeout=timeout, headers=headers)
                 if r == '':
                     print('[-]Movie Data not found!')
-                    return 
+                    return
                 with open(str(path) + "/" + filename, "wb") as code:
                     code.write(r.content)
                 return
@@ -567,24 +577,24 @@ def paste_file_to_folder(filepath, path, number, c_word, conf: config.Config):  
     try:
         # 如果soft_link=1 使用软链接
         if conf.soft_link():
-            os.symlink(filepath, path + '/' + number + c_word + houzhui)
+            relSymLink(filepath, path + '/' + number + c_word + houzhui)
         else:
             os.rename(filepath, path + '/' + number + c_word + houzhui)
         sub_res = conf.sub_rule()
-        
+
         for subname in sub_res:
             if os.path.exists(number + c_word + subname):  # 字幕移动
                 os.rename(number + c_word + subname, path + '/' + number + c_word + subname)
                 print('[+]Sub moved!')
                 return True
-        
+
     except FileExistsError:
         print('[-]File Exists! Please check your movie!')
         print('[-]move to the root folder of the program.')
-        return 
+        return
     except PermissionError:
         print('[-]Error! Please run as administrator!')
-        return 
+        return
 
 
 def paste_file_to_folder_mode2(filepath, path, multi_part, number, part, c_word, conf):  # 文件路径，番号，后缀，要移动至的位置
@@ -597,7 +607,7 @@ def paste_file_to_folder_mode2(filepath, path, multi_part, number, part, c_word,
             os.symlink(filepath, path + '/' + number + part + c_word + houzhui)
         else:
             os.rename(filepath, path + '/' + number + part + c_word + houzhui)
-        
+
         sub_res = conf.sub_rule()
         for subname in sub_res:
             if os.path.exists(os.getcwd() + '/' + number + c_word + subname):  # 字幕移动
@@ -608,21 +618,41 @@ def paste_file_to_folder_mode2(filepath, path, multi_part, number, part, c_word,
     except FileExistsError:
         print('[-]File Exists! Please check your movie!')
         print('[-]move to the root folder of the program.')
-        return 
+        return
     except PermissionError:
         print('[-]Error! Please run as administrator!')
         return
 
-def get_part(filepath, failed_folder):
-    try:
-        if re.search('-CD\d+', filepath):
-            return re.findall('-CD\d+', filepath)[0]
-        if re.search('-cd\d+', filepath):
-            return re.findall('-cd\d+', filepath)[0]
-    except:
-        print("[-]failed!Please rename the filename again!")
-        moveFailedFolder(filepath, failed_folder)
-        return
+def get_part(number, filepath, failed_folder):
+    if '-CD' in filepath or '-cd' in filepath:
+        multi_part = 1
+        try:
+            if re.search('-CD\d+', filepath):
+                part = re.findall('-CD\d+', filepath)[0]
+            if re.search('-cd\d+', filepath):
+                part = re.findall('-cd\d+', filepath)[0]
+            return multi_part, part
+        except:
+            pass
+
+        # except:
+        #     print("[-]failed!Please rename the filename again!")
+        #     moveFailedFolder(filepath, failed_folder)
+        #     return 0, ''
+
+    _tmp = re.findall(r'^([A-Z]{2,4}-\d+)([A-Z])$', number)
+    if _tmp:
+        multi_part = 1
+        part = '-CD{:1d}'.format(ord(_tmp[0][1]) - ord('A') + 1)
+        return multi_part, part
+
+    _tmp = re.findall(r'^([A-Z]{2,4}-\d+)_(\d+)$', os.path.basename(filepath.upper()).split('.')[0])
+    if _tmp:
+        multi_part = 1
+        part = '-CD{:d}'.format(int(_tmp[0][1]))
+        return multi_part, part
+
+    return 0, ''
 
 
 def debug_print(data: json):
@@ -670,20 +700,18 @@ def core_main(file_path, number_th, conf: config.Config):
     imagecut =  json_data.get('imagecut')
     tag =  json_data.get('tag')
     # =======================================================================判断-C,-CD后缀
-    if '-CD' in filepath or '-cd' in filepath:
-        multi_part = 1
-        part = get_part(filepath, conf.failed_folder())
+    multi_part, part = get_part(number, filepath, conf.failed_folder())
     if '-c.' in filepath or '-C.' in filepath or '中文' in filepath or '字幕' in filepath:
         cn_sub = '1'
         c_word = '-C'  # 中文字幕影片后缀
-    
+
     # 判断是否无码
     if is_uncensored(number):
         uncensored = 1
     else:
         uncensored = 0
-    
-    
+
+
     if '流出' in filepath:
         liuchu = '流出'
         leak = 1
@@ -700,7 +728,7 @@ def core_main(file_path, number_th, conf: config.Config):
     # main_mode
     #  1: 刮削模式 / Scraping mode
     #  2: 整理模式 / Organizing mode
-    #  3：不改变路径刮削 
+    #  3：不改变路径刮削
     if conf.main_mode() == 1:
         # 创建文件夹
         path = create_folder(conf.success_folder(),  json_data.get('location_rule'), json_data, conf)
@@ -721,7 +749,7 @@ def core_main(file_path, number_th, conf: config.Config):
         # 下载剧照 data, path, conf: config.Config, filepath, failed_folder
         if json_data.get('extrafanart'):
             extrafanart_download(json_data.get('extrafanart'), path, conf, filepath, conf.failed_folder())
-        
+
         # 裁剪图
         cutImage(imagecut, path, number, c_word)
 
@@ -730,12 +758,12 @@ def core_main(file_path, number_th, conf: config.Config):
 
         # 移动文件
         paste_file_to_folder(filepath, path, number, c_word, conf)
-        
+
         poster_path = path + '/' + number + c_word + '-poster.jpg'
         thumb_path = path + '/' + number + c_word + '-thumb.jpg'
         if conf.is_watermark():
             add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf)
-        
+
     elif conf.main_mode() == 2:
         # 创建文件夹
         path = create_folder(conf.success_folder(), json_data.get('location_rule'), json_data, conf)
@@ -745,7 +773,7 @@ def core_main(file_path, number_th, conf: config.Config):
         thumb_path = path + '/' + number + c_word + '-thumb.jpg'
         if conf.is_watermark():
             add_mark(poster_path, thumb_path, cn_sub, leak, uncensored, conf)
-        
+
     elif conf.main_mode() == 3:
         path = file_path.rsplit('/', 1)[0]
         path = path.rsplit('\\', 1)[0]

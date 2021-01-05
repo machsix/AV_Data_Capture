@@ -93,7 +93,7 @@ def main(number):
         dic = {
             'title': getTitle_fc2com(htmlcode2),
             'studio': getStudio_fc2com(htmlcode2),
-            'year': getYear_fc2com(getRelease_fc2com(htmlcode2)),   
+            'year': getYear_fc2com(getRelease_fc2com(htmlcode2)),
             'outline': '',  # getOutline_fc2com(htmlcode2),
             'runtime': '',
             'director': getStudio_fc2com(htmlcode2),
@@ -111,6 +111,8 @@ def main(number):
             'source': 'https://adult.contents.fc2.com/article/' + number + '/',
             'series': '',
         }
+        if len(dic['year']) == 0:
+            raise ValueError('Not found')
     except Exception as e:
         print(e)
         dic = {"title": ""}

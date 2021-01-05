@@ -137,6 +137,8 @@ if __name__ == '__main__':
     # Read config.ini
     conf = config.Config(path=config_file)
 
+    config.setConfig(conf)
+
     version_print = 'Version ' + version
     print('[*]================== AV Data Capture ===================')
     print('[*]' + version_print.center(54))

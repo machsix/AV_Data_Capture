@@ -5,7 +5,7 @@
             "name": "AV_Data_Capture",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/AV_Data_capture.py",
+            "program": "${workspaceFolder}/AV_Data_Capture.py",
             "console": "integratedTerminal"
         }
     ]
