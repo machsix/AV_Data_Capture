@@ -13,7 +13,7 @@ def getConfig():
     if _config:
         return _config
     else:
-        return Config._default_config()
+        return Config()
 
 class Config:
     def __init__(self, path: str = "config.ini"):
@@ -99,6 +99,19 @@ class Config:
             return switch, proxy, timeout, retry, proxytype
         except ValueError:
             self._exit("common")
+
+    def database(self):
+        try:
+            sec = "database"
+            return bool(int(self.conf.get(sec, "switch"))), self.conf.get(sec, "url"), self.conf.get(sec, "name")
+        except ValueError:
+            self._exit("common")
+
+    def useDatabase(self):
+        return bool(int(self.conf.get('database', 'switch')))
+
+    def ignoreDatabase(self):
+        return bool(int(self.conf.get('database', 'ignore')))
 
     def media_type(self) -> str:
         return self.conf.get('media', 'media_type')

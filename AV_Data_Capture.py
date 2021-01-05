@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import database
 
 from number_parser import get_number
 from core import *
@@ -77,6 +78,13 @@ def rm_empty_folder(path):
 def create_data_and_move(file_path: str, c: config.Config, debug):
     # Normalized number, eg: 111xxx-222.mp4 -> xxx-222.mp4
     n_number = get_number(debug, file_path)
+
+    if config.getConfig().useDatabase():
+        alreadyInDB = database.addNumber(n_number, os.path.abspath(file_path))
+        if alreadyInDB:
+            print("[!]Data for [{}] with number [{}] is in the database".format(file_path, n_number))
+            if not config.getConfig().ignoreDatabase():
+                return
 
     if debug == True:
         print("[!]Making Data for [{}], the number is [{}]".format(file_path, n_number))
