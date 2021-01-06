@@ -2,6 +2,7 @@ requests
 pyquery
 lxml
 beautifulsoup4
-pillow
+Pillow
 cloudscraper
 pysocks
+SQLAlchemy

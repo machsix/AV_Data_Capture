@@ -81,7 +81,7 @@ def create_data_and_move(file_path: str, c: config.Config, debug):
 
     if config.getConfig().useDatabase():
         multi_part, part = get_part(n_number, file_path)
-        alreadyInDB = database.addNumber(n_number+part, os.path.abspath(file_path))
+        alreadyInDB = database.addNumber(n_number+part, os.path.relpath(os.path.abspath(file_path)))
         if alreadyInDB:
             print("[!]Data for [{}] with number [{}] is in the database".format(file_path, n_number))
             if not config.getConfig().ignoreDatabase():
@@ -140,17 +140,35 @@ def create_data_and_move_with_custom_number(file_path: str, c: config.Config, cu
 if __name__ == '__main__':
     version = '4.3.2'
 
+    # Change CWD to the script dir
+    # https://stackoverflow.com/questions/50959340/pyinstaller-exes-file-refers-to-a-py-file
+    exeFile = sys.argv[0]
+    if os.path.basename(exeFile)[:6] == 'python':
+        exeFile = __file__
+    scriptPath = os.path.abspath(__file__)
+    os.chdir(os.path.dirname(exeFile))
+
     # Parse command line args
     single_file_path, config_file, custom_number, auto_exit = argparse_function(version)
 
     # Read config.ini
     conf = config.Config(path=config_file)
+    os.umask(conf.umask())
 
+    # Set config
     config.setConfig(conf)
+    lockFile = os.path.join(conf.success_folder(), 'AV_Data_Capture.lock')
+
+    # Mkdir output
+    os.makedirs(conf.success_folder(), exist_ok=True)
+    with open(lockFile, 'w') as f:
+        f.write(f'{os.getpid()}')
 
     version_print = 'Version ' + version
     print('[*]================== AV Data Capture ===================')
     print('[*]' + version_print.center(54))
+    print(f'[*] Chdir to {os.getcwd()}')
+    print(f'[*] Umask {oct(conf.umask())}')
     print('[*]======================================================')
 
     if conf.update_check():
@@ -186,6 +204,7 @@ if __name__ == '__main__':
 
     rm_empty_folder(conf.success_folder())
     rm_empty_folder(conf.failed_folder())
+    os.remove(lockFile)
     print("[+]All finished!!!")
     if conf.auto_exit():
         sys.exit(0)

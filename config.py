@@ -41,6 +41,9 @@ class Config:
         except ValueError:
             self._exit("common:main_mode")
 
+    def umask(self) -> int:
+        return self.conf.getint("common", "umask", fallback=2)
+
     def failed_folder(self) -> str:
         return self.conf.get("common", "failed_output_folder")
 
@@ -48,7 +51,7 @@ class Config:
         return self.conf.get("common", "success_output_folder")
 
     def soft_link(self) -> bool:
-        return self.conf.getboolean("common", "soft_link")
+        return self.conf.getboolean("common", "soft_link", fallback=False)
     def failed_move(self) -> bool:
         return self.conf.getboolean("common", "failed_move")
     def auto_exit(self) -> bool:
@@ -88,6 +91,7 @@ class Config:
 
     def transalte_values(self) -> bool:
         return self.conf.get("transalte", "values")
+
     def proxy(self) -> [str, int, int, str]:
         try:
             sec = "proxy"
@@ -108,10 +112,10 @@ class Config:
             self._exit("common")
 
     def useDatabase(self):
-        return bool(int(self.conf.get('database', 'switch')))
+        return self.conf.getboolean('database', 'switch', fallback=False)
 
     def ignoreDatabase(self):
-        return bool(int(self.conf.get('database', 'ignore')))
+        return self.conf.getboolean('database', 'ignore', fallback=False)
 
     def media_type(self) -> str:
         return self.conf.get('media', 'media_type')
