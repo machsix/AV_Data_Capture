@@ -15,14 +15,9 @@ make:
 	#@echo "[+]Set CLOUDSCRAPER_PATH variable"
 	#export cloudscraper_path=$(python3 -c 'import cloudscraper as _; print(_.__path__[0])' | tail -n 1)
 
-	@echo "[+]Pyinstaller make"
-	pyinstaller --onefile AV_Data_Capture.py  --hidden-import ADC_function.py --hidden-import core.py
-
-	@echo "[+]Move to bin"
-	if [ ! -d "./bin" ];then  mkdir bin; fi
-	mv dist/* bin/
-	cp config.ini bin/
-	rm -rf dist/
+	@echo "[+]Pyinstaller make for x64"
+	mkdir -p dist/amd64
+	pyinstaller --onefile AV_Data_Capture.spec  --hidden-import ADC_function.py --hidden-import core.py --distpath "./dist/amd64"
 
 	@echo "[+]Clean cache"
 	@find . -name '*.pyc' -delete
