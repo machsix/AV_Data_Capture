@@ -101,9 +101,7 @@ jobs:
           registry: gcr.io
           image: machsix/pyinstaller-alpine:latest
           options: -v ${{ github.workspace }}:/src
-          run: ls -a
-          # run: cd /src && /pyinstaller/pyinstaller.sh --noconfirm --onefile --log-level DEBUG --clean AV_Data_Capture.spec
-
+          run: sed -i 's|{{cwd}}|'$(pwd)'|' AV_Data_Capture_alpine.spec && /pyinstaller/pyinstaller.sh --noconfirm --onefile --log-level DEBUG --clean AV_Data_Capture_alpine.spec
       - uses: actions/upload-artifact@v2
         with:
           name: AV_Data_Capture-CLI-${{ env.VERSION }}-alpine
