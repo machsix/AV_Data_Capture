@@ -105,6 +105,19 @@ class Config:
         except ValueError:
             self._exit("common")
 
+    def database(self):
+        try:
+            sec = "database"
+            return bool(int(self.conf.get(sec, "switch"))), self.conf.get(sec, "url"), self.conf.get(sec, "name")
+        except ValueError:
+            self._exit("common")
+
+    def useDatabase(self) -> bool:
+        return bool(int(self.conf.get('database', 'switch')))
+
+    def ignoreDatabase(self) -> bool:
+        return bool(int(self.conf.get('database', 'ignore')))
+
     def cacert_file(self) -> str:
         return self.conf.get('proxy', 'cacert_file')
 
@@ -233,6 +246,13 @@ class Config:
         conf.set(sec13, "switch", 1)
         conf.set(sec13, "extrafanart_folder", "extrafanart")
 
+        sec14 = "database"
+        conf.add.section(sec14)
+        conf.set(sec14, "switch", 0)
+        conf.set(sec14, "url", "sqlite:///avdb.db")
+        conf.set(sec14, "ignore", 0)
+        conf.set(sec14, "name", "AVDB")
+
         return conf
 
 
@@ -258,7 +278,7 @@ class IniProxy():
         self.timeout = timeout
         self.retry = retry
         self.proxytype = proxytype
-    
+
     def proxies(self):
         ''' 获得代理参数，默认http代理
         '''

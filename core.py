@@ -440,16 +440,31 @@ def paste_file_to_folder_mode2(filepath, path, multi_part, number, part, leak_wo
         print('[-]OS Error errno ' + oserr.errno)
         return
 
-def get_part(filepath):
-    try:
-        if re.search('-CD\d+', filepath):
-            return re.findall('-CD\d+', filepath)[0]
-        if re.search('-cd\d+', filepath):
-            return re.findall('-cd\d+', filepath)[0]
-    except:
-        print("[-]failed!Please rename the filename again!")
-        moveFailedFolder(filepath)
-        return
+def get_part(number, filepath):
+    if '-CD' in filepath or '-cd' in filepath:
+        multi_part = 1
+        try:
+            if re.search('-CD\d+', filepath):
+                part = re.findall('-CD\d+', filepath)[0]
+            if re.search('-cd\d+', filepath):
+                part = re.findall('-cd\d+', filepath)[0]
+            return multi_part, part
+        except:
+            pass
+
+    _tmp = re.findall(r'^([A-Z]{2,4}-\d+)([A-Z])$', os.path.basename(filepath.upper()).split('.')[0])
+    if _tmp:
+        multi_part = 1
+        part = '-CD{:1d}'.format(ord(_tmp[0][1]) - ord('A') + 1)
+        return multi_part, part
+
+    _tmp = re.findall(r'^([A-Z]{2,4}-\d+)_(\d+)$', os.path.basename(filepath.upper()).split('.')[0])
+    if _tmp:
+        multi_part = 1
+        part = '-CD{:d}'.format(int(_tmp[0][1]))
+        return multi_part, part
+
+    return 0, ''
 
 
 def debug_print(data: json):
@@ -499,9 +514,7 @@ def core_main(file_path, number_th, conf: config.Config):
     imagecut =  json_data.get('imagecut')
     tag =  json_data.get('tag')
     # =======================================================================判断-C,-CD后缀
-    if '-CD' in filepath or '-cd' in filepath:
-        multi_part = 1
-        part = get_part(filepath)
+    multi_part, part = get_part(number, filepath)
     if '-c.' in filepath or '-C.' in filepath or '中文' in filepath or '字幕' in filepath:
         cn_sub = '1'
         c_word = '-C'  # 中文字幕影片后缀

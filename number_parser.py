@@ -46,7 +46,7 @@ def get_number(debug,filepath: str) -> str:
                 file_number = get_number_by_dict(lower_check)
                 if file_number:
                     return file_number
-                return str(re.search(r'\w+(-|_)\w+', filename, re.A).group())
+                return str(re.search(r'\w+(-|_)\d+', filename, re.A).group())
             else:  # 提取不含减号-的番号，FANZA CID
                 # 欧美番号匹配规则
                 oumei = re.search(r'[a-zA-Z]+\.\d{2}\.\d{2}\.\d{2}', filepath)
@@ -74,7 +74,7 @@ def get_number(debug,filepath: str) -> str:
             file_number = get_number_by_dict(lower_check)
             if file_number:
                 return file_number
-            return str(re.search(r'\w+(-|_)\w+', filename, re.A).group())
+            return str(re.search(r'\w+(-|_)\d+', filename, re.A).group())
         else:  # 提取不含减号-的番号，FANZA CID
             # 欧美番号匹配规则
             oumei = re.search(r'[a-zA-Z]+\.\d{2}\.\d{2}\.\d{2}', filepath)

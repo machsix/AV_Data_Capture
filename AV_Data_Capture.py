@@ -6,12 +6,13 @@ import sys
 import shutil
 import typing
 import urllib3
+import database
 
 import config
 import time
 from ADC_function import get_html, is_link
 from number_parser import get_number
-from core import core_main
+from core import core_main, get_part
 
 
 def check_update(local_version):
@@ -89,6 +90,14 @@ def create_data_and_move(file_path: str, c: config.Config, debug):
     file_name = os.path.basename(file_path)
     n_number = get_number(debug, file_name)
     file_path = os.path.abspath(file_path)
+
+    if c.useDatabase() is True:
+        multi_part, part = get_part(n_number, file_path)
+        alreadyInDB = database.addNumber(n_number+part, os.path.relpath(file_path, os.getcwd()))
+        if alreadyInDB:
+            print("[!]Data for [{}] with number [{}] is in the database".format(file_path, n_number))
+            if not c.ignoreDatabase():
+                return
 
     if debug == True:
         print("[!]Making Data for [{}], the number is [{}]".format(file_path, n_number))

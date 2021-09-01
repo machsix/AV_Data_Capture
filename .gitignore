@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+AV_Capture_output/
+AV_Capture_failed/
+
 # C extensions
 *.so
 
