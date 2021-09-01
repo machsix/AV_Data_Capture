@@ -14,7 +14,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        # os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -33,7 +34,7 @@ jobs:
       - name: Test number_perser.get_number
         run: |
           python number_parser.py -v
-          
+
       - name: Build with PyInstaller for macos/ubuntu
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: |
@@ -71,3 +72,40 @@ jobs:
         with:
           name: AV_Data_Capture-CLI-${{ env.VERSION }}-${{ runner.os }}-amd64
           path: dist
+
+  build-alpine:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test number_perser.get_number
+        run: |
+          python number_parser.py -v
+
+      - name: Set VERSION variable for macos/ubuntu
+        run: |
+          echo "VERSION=$(python AV_Data_Capture.py --version)" >> $GITHUB_ENV
+
+      - uses: addnab/docker-run-action@v3
+        with:
+          registry: gcr.io
+          image: machsix/pyinstaller-alpine:latest
+          options: -v ${{ github.workspace }}:/src
+          run: ls -a
+          # run: cd /src && /pyinstaller/pyinstaller.sh --noconfirm --onefile --log-level DEBUG --clean AV_Data_Capture.spec
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: AV_Data_Capture-CLI-${{ env.VERSION }}-alpine
+          path: dist/alpine/AV_Data_Capture
+          if-no-files-found: error
