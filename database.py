@@ -33,7 +33,7 @@ def connectDB():
     if switch:
         SQL_ENGINE = create_engine(url, echo=False)
         SQL_SESSION = sessionmaker(bind=SQL_ENGINE)
-        if not SQL_ENGINE.dialect.has_table(SQL_ENGINE, AvDB.__tablename__):
+        if not SQL_ENGINE.dialect.has_table(SQL_ENGINE.connect(), AvDB.__tablename__):
             Base.metadata.create_all(SQL_ENGINE)
 
 #%%
