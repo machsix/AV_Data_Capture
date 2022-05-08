@@ -7,8 +7,10 @@ import typing
 G_spat = re.compile(
     "^\w+\.(cc|com|net|me|club|jp|tv|xyz|biz|wiki|info|tw|us|de)@|^22-sht\.me|"
     "^(fhd|hd|sd|1080p|720p|4K)(-|_)|"
-    "(-|_)(fhd|hd|sd|1080p|720p|4K|x264|x265|uncensored|leak)",
+    "(-|_)(fhd|hd(\d{1,2})?|sd|1080p|720p|4K|x264|x265|uncensored|leak)",
     re.IGNORECASE)
+G_prefix = re.compile(r'^(\[FHD\])', re.IGNORECASE)
+G_postfix = re.compile(r'(-HD\d{1,2}|_\d|_[a-zA-Z])$', re.IGNORECASE)
 
 
 def get_number(debug: bool, file_path: str) -> str:
@@ -36,8 +38,11 @@ def get_number(debug: bool, file_path: str) -> str:
     'snis-829'
     """
     filepath = os.path.basename(file_path)
+    filepath = os.path.splitext(filepath)[0]
     # debug True 和 False 两块代码块合并，原因是此模块及函数只涉及字符串计算，没有IO操作，debug on时输出导致异常信息即可
     try:
+        filepath = G_prefix.sub("", filepath)
+        filepath = G_postfix.sub("", filepath)
         file_number = get_number_by_dict(filepath)
         if file_number:
             return file_number
@@ -48,12 +53,19 @@ def get_number(debug: bool, file_path: str) -> str:
             if 'fc2' in lower_check:
                 filename = lower_check.replace('ppv', '').replace('--', '-').replace('_', '-').upper()
             filename = re.sub("[-_]cd\d{1,2}", "", filename, flags=re.IGNORECASE)
-            if not re.search("-|_", filename): # 去掉-CD1之后再无-的情况，例如n1012-CD1.wmv
-                return str(re.search(r'\w+', filename[:filename.find('.')], re.A).group())
+            if not re.search("-|_", filename):  # 去掉-CD1之后再无-的情况，例如n1012-CD1.wmv
+                filename = str(re.search(r'\w+', filename[:filename.find('.')], re.A).group())
+                tmp = re.findall(r'^([a-zA-Z]{3,})(\d{3})$', filename)
+                if tmp:
+                    filename = tmp[0][0] + '-' + tmp[0][1]
+                return filename
             file_number = str(re.search(r'\w+(-|_)\w+', filename, re.A).group())
             file_number = re.sub("(-|_)c$", "", file_number, flags=re.IGNORECASE)
             if re.search("\d+ch$", file_number, flags=re.I):
                 file_number = file_number[:-2]
+            tmp = re.findall(r'^([a-zA-Z]{3,})-(\d{3})[A-Z]$', file_number)
+            if tmp:
+                file_number = tmp[0][0] + '-' + tmp[0][1]
             return file_number.upper()
         else:  # 提取不含减号-的番号，FANZA CID
             # 欧美番号匹配规则
@@ -63,7 +75,7 @@ def get_number(debug: bool, file_path: str) -> str:
             try:
                 return str(
                     re.findall(r'(.+?)\.',
-                               str(re.search('([^<>/\\\\|:""\\*\\?]+)\\.\\w+$', filepath).group()))).strip(
+                               str(re.search('([^<>/\\\\|:""\\*\\?]+)$', filepath).group()))).strip(
                     "['']").replace('_', '-')
             except:
                 return str(re.search(r'(.+?)\.', filepath)[0])
@@ -71,6 +83,14 @@ def get_number(debug: bool, file_path: str) -> str:
         if debug:
             print(f'[-]Number Parser exception: {e} [{file_path}]')
         return None
+
+
+def hhb(x):
+    tmp = re.findall(r'^-?([a-zA-Z]{3,})(\d+)hhb\d$', x)
+    if tmp:
+        return tmp[0][0] + '-' + str(int(tmp[0][1]))
+    else:
+        return ''
 
 
 # 按javdb数据源的命名规范提取number
@@ -82,7 +102,8 @@ G_TAKE_NUM_RULES = {
     'x-art': lambda x: str(re.search(r'x-art\.\d{2}\.\d{2}\.\d{2}', x, re.I).group()),
     'xxx-av': lambda x: ''.join(['xxx-av-', re.findall(r'xxx-av[^\d]*(\d{3,5})[^\d]*', x, re.I)[0]]),
     'heydouga': lambda x: 'heydouga-' + '-'.join(re.findall(r'(\d{4})[\-_](\d{3,4})[^\d]*', x, re.I)[0]),
-    'heyzo': lambda x: 'HEYZO-' + re.findall(r'heyzo[^\d]*(\d{4})', x, re.I)[0]
+    'heyzo': lambda x: 'HEYZO-' + re.findall(r'heyzo[^\d]*(\d{4})', x, re.I)[0],
+    r'hhb\d': lambda x: hhb(x)
 }
 
 

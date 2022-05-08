@@ -1,3 +1,4 @@
+from fileinput import filename
 import json
 import os.path
 import os
@@ -710,6 +711,28 @@ def debug_print(data: json):
         pass
 
 
+def get_part(number, filepath):
+    basefilename = os.path.splitext(os.path.basename(filepath))
+
+    _tmp = re.findall('[-_]CD\d+', basefilename, re.IGNORECASE)
+    if _tmp:
+        return True, _tmp[0].upper()
+
+    _tmp = re.findall(r'^[a-zA-Z]{3,}-\d{3}_([A-Z])$', basefilename)
+    if _tmp:
+        return True, '-CD{:1d}'.format(ord(_tmp[0]) - ord('A') + 1)
+
+    _tmp = re.findall(r'^[a-zA-Z]{3,}-\d{3}_(\d)$', basefilename)
+    if _tmp:
+        return True, '-CD{:1d}'.format(int(_tmp[0]))
+
+    _tmp = re.findall(r'^-?[a-zA-Z]{3,}\d+hhb(\d)$', basefilename)
+    if _tmp:
+        return True, '-CD{:1d}'.format(int(_tmp[0]))
+
+    return False, ''
+
+
 def core_main_no_net_op(movie_path, number):
     conf = config.getInstance()
     part = ''
@@ -724,9 +747,7 @@ def core_main_no_net_op(movie_path, number):
     part = ''
     path = str(Path(movie_path).parent)
 
-    if re.search('[-_]CD\d+', movie_path, re.IGNORECASE):
-        part = re.findall('[-_]CD\d+', movie_path, re.IGNORECASE)[0].upper()
-        multi = True
+    multi, part = get_part(number, movie_path)
     if re.search(r'[-_]C(\.\w+$|-\w+)|\d+ch(\.\w+$|-\w+)', movie_path,
             re.I) or '中文' in movie_path or '字幕' in movie_path:
         cn_sub = '1'
@@ -803,9 +824,11 @@ def core_main(movie_path, number_th, oCC):
     imagecut =  json_data.get('imagecut')
     tag =  json_data.get('tag')
     # =======================================================================判断-C,-CD后缀
-    if re.search('[-_]CD\d+', movie_path, re.IGNORECASE):
+    multi_part, part = get_part(movie_path, number_th)
+    if multi_part:
         multi_part = 1
-        part = re.findall('[-_]CD\d+', movie_path, re.IGNORECASE)[0].upper()
+    else:
+        multi_part = 0
     if re.search(r'[-_]C(\.\w+$|-\w+)|\d+ch(\.\w+$|-\w+)', movie_path,
             re.I) or '中文' in movie_path or '字幕' in movie_path:
         cn_sub = '1'
