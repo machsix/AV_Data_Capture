@@ -712,7 +712,7 @@ def debug_print(data: json):
 
 
 def get_part(number, filepath):
-    basefilename = os.path.splitext(os.path.basename(filepath))
+    basefilename = os.path.splitext(os.path.basename(filepath))[0]
 
     _tmp = re.findall('[-_]CD\d+', basefilename, re.IGNORECASE)
     if _tmp:
@@ -824,7 +824,7 @@ def core_main(movie_path, number_th, oCC):
     imagecut =  json_data.get('imagecut')
     tag =  json_data.get('tag')
     # =======================================================================判断-C,-CD后缀
-    multi_part, part = get_part(movie_path, number_th)
+    multi_part, part = get_part(number_th, movie_path)
     if multi_part:
         multi_part = 1
     else:
