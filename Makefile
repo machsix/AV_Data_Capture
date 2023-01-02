@@ -24,6 +24,7 @@ make:
         --add-data "`python3 -c 'import face_recognition_models as _; print(_.__path__[0])' | tail -n 1`:face_recognition_models" \
 		--add-data "Img:Img" \
 		--add-data "config.ini:." \
+		--add-data "Resources:Resources"
 
 	@echo "[+]Move to bin"
 	if [ ! -d "./bin" ];then  mkdir bin; fi

@@ -52,7 +52,7 @@ class Scraping:
     """
     """
     adult_full_sources = ['javlibrary', 'javdb', 'javbus', 'airav', 'fanza', 'xcity', 'jav321',
-                          'mgstage', 'fc2', 'avsox', 'dlsite', 'carib', 'madou', 
+                          'mgstage', 'fc2', 'avsox', 'dlsite', 'carib', 'madou',
                           'getchu', 'gcolle','javday','pissplay'
                           ]
     adult_func_mapping = {
@@ -174,9 +174,11 @@ class Scraping:
                     if self.debug:
                         print(f"[+]Find movie [{number}] metadata on website '{source}'")
                     break
+                json_data = {}
             except:
                 continue
-            
+                json_data = {}
+
         # javdb的封面有水印，如果可以用其他源的封面来替换javdb的封面
         if 'source' in json_data and json_data['source'] == 'javdb':
             # search other sources
@@ -197,7 +199,7 @@ class Scraping:
                     other_sources = sources[sources.index(other_json_data['source']) + 1:]
                 except:
                     pass
-            
+
         # Return if data not found in all sources
         if not json_data:
             print(f'[-]Movie Number [{number}] not found!')

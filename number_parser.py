@@ -11,7 +11,7 @@ G_spat = re.compile(
     "(-|_)(fhd|hd|sd|1080p|720p|4K|x264|x265|uncensored|leak)",
     re.IGNORECASE)
 
-G_studio = json.load(open(os.path.dirname(__file__) + '/MappingTable/studio.json'))
+G_studio = set(json.load(open(os.path.dirname(__file__) + '/Resources/studio.json')))
 
 def get_number(debug: bool, file_path: str) -> str:
     """
@@ -54,9 +54,12 @@ def get_number(debug: bool, file_path: str) -> str:
         elif '-' in filepath or '_' in filepath:  # 普通提取番号 主要处理包含减号-和_的番号
             filepath = G_spat.sub("", filepath)
             filename = str(re.sub("\[\d{4}-\d{1,2}-\d{1,2}\] - ", "", filepath))  # 去除文件名中时间
-            lower_check = filename.lower()
-            if 'fc2' in lower_check:
-                filename = lower_check.replace('ppv', '').replace('--', '-').replace('_', '-').upper()
+            filename = filename.upper()
+            if 'FC2' in filename:
+                filename = filename.replace('PPV', '').replace('--', '-').replace('_', '-').upper()
+            m = re.search(r'([A-Z]{2,})-?(\d{3,})(?:(?:_|-)?(\d+|[A-Z]))?\.', filename)
+            if m and m.group(1) in G_studio:
+                return f'{m.group(1)}-{m.group(2)}'
             filename = re.sub("[-_]cd\d{1,2}", "", filename, flags=re.IGNORECASE)
             if not re.search("-|_", filename): # 去掉-CD1之后再无-的情况，例如n1012-CD1.wmv
                 return str(re.search(r'\w+', filename[:filename.find('.')], re.A).group())
@@ -205,6 +208,11 @@ if __name__ == "__main__":
     #     import doctest
     #     doctest.testmod(raise_on_error=True)
     test_use_cases = (
+        "ofje-269_A.mp4",
+        "DOVR-070-A.mp4",
+        "hnd057A.FHD.wmv",
+        "SOE-292_1.mp4",
+        "SS-020.avi",
         "SOE-757B.wmv",
         "SOE-480B.mp4",
         "avsa00139.mp4",

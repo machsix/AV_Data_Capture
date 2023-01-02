@@ -367,7 +367,7 @@ def print_files(path, leak_word, c_word, naming_rule, part, cn_sub, json_data, f
                 pass
             print("  <maker>" + studio + "</maker>", file=code)
             print("  <label>" + label + "</label>", file=code)
-            
+
             skip_tags = config.getInstance().donot_save_tags()
             if not skip_tags:
                 if config.getInstance().actor_only_tag():
@@ -601,7 +601,7 @@ def paste_file_to_folder(filepath, path, multi_part, number, part, leak_word, c_
 
 def paste_file_to_folder_mode2(filepath, path, multi_part, number, part, leak_word, c_word,
                                hack_word):  # 文件路径，番号，后缀，要移动至的位置
-    if multi_part == 1:
+    if multi_part:
         number += part  # 这时number会被附加上CD1后缀
     filepath_obj = pathlib.Path(filepath)
     houzhui = filepath_obj.suffix
@@ -689,6 +689,28 @@ def debug_print(data: json):
         pass
 
 
+def get_part(number, filepath):
+    basefilename = os.path.splitext(os.path.basename(filepath))[0].upper()
+
+    m = re.search(number + '(?:-|_)?([A-Z])', basefilename)
+    if m:
+        return True, '-CD{:1d}'.format(ord(m.group(1)) - ord('A') + 1)
+
+    m = re.search(number + '(?:-|_)?(\d)', basefilename)
+    if m:
+        return True, f'-CD{int(m.group(1))}'
+
+    m = re.search('HHB(\d+)', basefilename)
+    if m:
+        return True, f'-CD{int(m.group(1))}'
+
+    m = re.search('[-_](CD\d+)', basefilename)
+    if m:
+        return True, '-'+m.group(1)
+
+    return False, ''
+
+
 def core_main_no_net_op(movie_path, number):
     conf = config.getInstance()
     part = ''
@@ -704,9 +726,7 @@ def core_main_no_net_op(movie_path, number):
     part = ''
     path = str(Path(movie_path).parent)
 
-    if re.search('[-_]CD\d+', movie_path, re.IGNORECASE):
-        part = re.findall('[-_]CD\d+', movie_path, re.IGNORECASE)[0].upper()
-        multi = True
+    multi, part = get_part(number, movie_path)
     if re.search(r'[-_]C(\.\w+$|-\w+)|\d+ch(\.\w+$|-\w+)', movie_path,
                  re.I) or '中文' in movie_path or '字幕' in movie_path or ".chs" in movie_path or '.cht' in movie_path:
         cn_sub = '1'
@@ -791,7 +811,7 @@ def move_subtitles(filepath, path, multi_part, number, part, leak_word, c_word, 
 def core_main(movie_path, number_th, oCC, specified_source=None, specified_url=None):
     conf = config.getInstance()
     # =======================================================================初始化所需变量
-    multi_part = 0
+    multi_part = False
     part = ''
     leak_word = ''
     c_word = ''
@@ -821,9 +841,7 @@ def core_main(movie_path, number_th, oCC, specified_source=None, specified_url=N
     imagecut = json_data.get('imagecut')
     tag = json_data.get('tag')
     # =======================================================================判断-C,-CD后缀
-    if re.search('[-_]CD\d+', movie_path, re.IGNORECASE):
-        multi_part = 1
-        part = re.findall('[-_]CD\d+', movie_path, re.IGNORECASE)[0].upper()
+    multi_part, part = get_part(number_th, movie_path)
     if re.search(r'[-_]C(\.\w+$|-\w+)|\d+ch(\.\w+$|-\w+)', movie_path,
                  re.I) or '中文' in movie_path or '字幕' in movie_path:
         cn_sub = '1'
@@ -847,7 +865,7 @@ def core_main(movie_path, number_th, oCC, specified_source=None, specified_url=N
     # 判断是否4k
     if '4K' in tag:
         tag.remove('4K')  # 从tag中移除'4K'
-        
+
     # 判断是否为无码破解
     if '无码破解' in tag:
         tag.remove('无码破解')  # 从tag中移除'无码破解'
@@ -884,7 +902,7 @@ def core_main(movie_path, number_th, oCC, specified_source=None, specified_url=N
     if conf.main_mode() == 1:
         # 创建文件夹
         path = create_folder(json_data)
-        if multi_part == 1:
+        if multi_part:
             number += part  # 这时number会被附加上CD1后缀
 
         # 检查小封面, 如果image cut为3，则下载小封面
@@ -958,7 +976,7 @@ def core_main(movie_path, number_th, oCC, specified_source=None, specified_url=N
 
     elif conf.main_mode() == 3:
         path = str(Path(movie_path).parent)
-        if multi_part == 1:
+        if multi_part:
             number += part  # 这时number会被附加上CD1后缀
 
         # 检查小封面, 如果image cut为3，则下载小封面
