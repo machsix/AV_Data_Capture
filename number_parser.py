@@ -3,6 +3,7 @@ import re
 import sys
 import config
 import typing
+import json
 
 G_spat = re.compile(
     "^\w+\.(cc|com|net|me|club|jp|tv|xyz|biz|wiki|info|tw|us|de)@|^22-sht\.me|"
@@ -10,6 +11,7 @@ G_spat = re.compile(
     "(-|_)(fhd|hd|sd|1080p|720p|4K|x264|x265|uncensored|leak)",
     re.IGNORECASE)
 
+G_studio = json.load(open(os.path.dirname(__file__) + '/MappingTable/studio.json'))
 
 def get_number(debug: bool, file_path: str) -> str:
     """
@@ -67,8 +69,18 @@ def get_number(debug: bool, file_path: str) -> str:
             file_number = re.sub("(-|_)c$", "", file_number, flags=re.IGNORECASE)
             if re.search("\d+ch$", file_number, flags=re.I):
                 file_number = file_number[:-2]
+            if re.search("\d+[A-Z]$", file_number):
+                file_number = file_number[:-1]
             return file_number.upper()
-        else:  # 提取不含减号-的番号，FANZA CID
+        else:
+            filename = os.path.basename(filepath).split('.')[0].upper()
+            for s in G_studio:
+                if s in filename:
+                    m = re.search(r'\b'+s+r'(\d+)', filename, re.IGNORECASE)
+                    if m:
+                        return s + '-' + m.group(1).lstrip('0').zfill(3)
+
+            # 提取不含减号-的番号，FANZA CID
             # 欧美番号匹配规则
             oumei = re.search(r'[a-zA-Z]+\.\d{2}\.\d{2}\.\d{2}', filepath)
             if oumei:
@@ -84,7 +96,7 @@ def get_number(debug: bool, file_path: str) -> str:
         if debug:
             print(f'[-]Number Parser exception: {e} [{file_path}]')
         return None
-        
+
 # modou提取number
 def md(filename):
     m = re.search(r'(md[a-z]{0,2}-?)(\d{2,})(-ep\d*|-\d*)*', filename, re.I)
@@ -109,10 +121,15 @@ def yk(filename):
 def pm(filename):
     m = re.search(r'(pm[a-z]?-?)(\d{2,})(-ep\d*)*', filename, re.I)
     return f'{m.group(1).replace("-","").upper()}{m.group(2).zfill(3)}{m.group(3) or ""}'
-   
+
 def fsog(filename):
     m = re.search(r'(fsog-?)(\d{2,})(-ep\d*)*', filename, re.I)
     return f'{m.group(1).replace("-","").upper()}{m.group(2).zfill(3)}{m.group(3) or ""}'
+
+def hhb(filename):
+    m = re.search(r'([a-zA-Z]{3,})(\d+)hhb(\d+)?\.', filename, re.I)
+    return f'{m.group(1).upper()}-{m.group(2).lstrip("0").zfill(3)}'
+
 
 # 按javdb数据源的命名规范提取number
 G_TAKE_NUM_RULES = {
@@ -132,7 +149,8 @@ G_TAKE_NUM_RULES = {
     r'\bmky-[a-z]{2,2}-\d{2,}':mky,
     r'\byk-\d{2,3}': yk,
     r'\bpm[a-z]?-?\d{2,}':pm,
-    r'\bfsog-?\d{2,}':fsog
+    r'\bfsog-?\d{2,}':fsog,
+    r'([a-zA-Z]{3,})(\d+)hhb(\d+)?\.': hhb
 }
 
 
@@ -187,6 +205,15 @@ if __name__ == "__main__":
     #     import doctest
     #     doctest.testmod(raise_on_error=True)
     test_use_cases = (
+        "SOE-757B.wmv",
+        "SOE-480B.mp4",
+        "avsa00139.mp4",
+        "-ppsd00042hhb3.wmv",
+        "[FHD]bf-246A.wmv",
+        "jufd285.mp4",
+        "snis00963hhb.wmv",
+        "-3wanz00062hhb2.wmv",
+        "[FHD]soe-557.mp4",
         "MEYD-594-C.mp4",
         "SSIS-001_C.mp4",
         "SSIS100-C.mp4",
